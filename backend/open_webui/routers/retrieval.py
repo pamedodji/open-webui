@@ -61,6 +61,7 @@ from open_webui.models.knowledge import Knowledges
 
 # Document loaders
 from open_webui.retrieval.loaders.youtube import YoutubeLoader
+from open_webui.retrieval.advanced_chunker import split_documents as advanced_split_documents
 from open_webui.retrieval.utils import (
     build_loader_from_config,
     filter_accessible_collections,
@@ -1408,7 +1409,16 @@ def save_docs_to_vector_db(
                     raise ValueError(ERROR_MESSAGES.DUPLICATE_CONTENT)
 
     if split:
-        if request.app.state.config.ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER:
+        use_advanced_chunker = os.getenv('OPENWEBUI_DISABLE_ADVANCED_CHUNKING', 'false').lower() != 'true'
+        if use_advanced_chunker:
+            try:
+                log.info('Using advanced knowledge chunker')
+                docs = advanced_split_documents(docs, request=request)
+            except Exception:
+                log.exception('Advanced chunker failed, falling back to built-in splitter')
+                use_advanced_chunker = False
+
+        if not use_advanced_chunker and request.app.state.config.ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER:
             log.info('Using markdown header text splitter')
             # Define headers to split on - covering most common markdown header levels
             markdown_splitter = MarkdownHeaderTextSplitter(
@@ -1439,14 +1449,14 @@ def save_docs_to_vector_db(
             if request.app.state.config.CHUNK_MIN_SIZE_TARGET > 0:
                 docs = merge_docs_to_target_size(request, docs)
 
-        if request.app.state.config.TEXT_SPLITTER in ['', 'character']:
+        if not use_advanced_chunker and request.app.state.config.TEXT_SPLITTER in ['', 'character']:
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=request.app.state.config.CHUNK_SIZE,
                 chunk_overlap=request.app.state.config.CHUNK_OVERLAP,
                 add_start_index=True,
             )
             docs = text_splitter.split_documents(docs)
-        elif request.app.state.config.TEXT_SPLITTER == 'token':
+        elif not use_advanced_chunker and request.app.state.config.TEXT_SPLITTER == 'token':
             log.info(f'Using token text splitter: {request.app.state.config.TIKTOKEN_ENCODING_NAME}')
 
             tiktoken.get_encoding(str(request.app.state.config.TIKTOKEN_ENCODING_NAME))
