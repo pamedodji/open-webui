@@ -1467,7 +1467,7 @@ def save_docs_to_vector_db(
                 add_start_index=True,
             )
             docs = text_splitter.split_documents(docs)
-        else:
+        elif not use_advanced_chunker:
             raise ValueError(ERROR_MESSAGES.DEFAULT('Invalid text splitter'))
 
     if len(docs) == 0:
