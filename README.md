@@ -116,7 +116,7 @@ This will start the Open WebUI server, which you can access at [http://localhost
 # Build the image
 docker build -t open-webui .
 
-# Run with Ollama on the same machine (network=host, port 8080)
+# With Ollama on the same machine (network=host, port 8080)
 docker run -d \
   --network=host \
   -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
@@ -124,9 +124,19 @@ docker run -d \
   --name open-webui \
   --restart always \
   open-webui
+
+# With OpenAI API only (no Ollama)
+docker run -d \
+  -p 3000:8080 \
+  -e OPENAI_API_KEY=your_secret_key \
+  -v open-webui-data:/app/backend/data \
+  --name open-webui \
+  --restart always \
+  open-webui
 ```
 
-Access Open WebUI at [http://localhost:8080](http://localhost:8080).
+- With Ollama: [http://localhost:8080](http://localhost:8080)
+- With OpenAI API: [http://localhost:3000](http://localhost:3000)
 
 ---
 
