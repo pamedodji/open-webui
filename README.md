@@ -107,6 +107,29 @@ This will start the Open WebUI server, which you can access at [http://localhost
 
 ### Quick Start with Docker 🐳
 
+> [!NOTE]
+> This fork includes a custom advanced chunking algorithm. To use it, build the image locally instead of pulling from the official registry.
+
+**Build and run from source (this fork):**
+
+```bash
+# Build the image
+docker build -t open-webui .
+
+# Run with Ollama on the same machine (network=host, port 8080)
+docker run -d \
+  --network=host \
+  -e OLLAMA_BASE_URL=http://127.0.0.1:11434 \
+  -v open-webui-data:/app/backend/data \
+  --name open-webui \
+  --restart always \
+  open-webui
+```
+
+Access Open WebUI at [http://localhost:8080](http://localhost:8080).
+
+---
+
 > [!NOTE]  
 > Please note that for certain Docker environments, additional configurations might be needed. If you encounter any connection issues, our detailed guide on [Open WebUI Documentation](https://docs.openwebui.com/) is ready to assist you.
 
